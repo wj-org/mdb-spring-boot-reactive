@@ -4,12 +4,16 @@ import com.example.mdbspringbootreactive.model.Account;
 import com.example.mdbspringbootreactive.model.Txn;
 import com.example.mdbspringbootreactive.repository.AccountRepository;
 import com.example.mdbspringbootreactive.repository.TxnRepository;
-import com.mongodb.MongoWriteException;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.http.ResponseEntity;
+import org.springframework.data.mongodb.core.ReactiveMongoOperations;
+import org.springframework.http.HttpStatus;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
+import reactor.core.publisher.Flux;
+import reactor.core.publisher.Mono;
+import reactor.core.scheduler.Schedulers;
 
 import java.time.LocalDateTime;
 import java.util.ArrayList;
@@ -24,80 +28,89 @@ public class AccountController {
     TxnRepository txnRepository;
 
     @PostMapping("/account")
-    public Account createAccount(@RequestBody Account account){
-        System.out.println(account);
+    public Mono<Account> createAccount(@RequestBody Account account){
         return accountRepository.save(account);
     }
 
     @GetMapping("/account/{accountNum}")
-    public Account getAccount(@PathVariable String accountNum){
+    public Mono<Account> getAccount(@PathVariable String accountNum){
         return accountRepository.findByAccountNum(accountNum);
     }
 
     @PostMapping("/account/{accountNum}/debit")
-    public ResponseEntity<String> debitAccount(@PathVariable String accountNum, @RequestBody Map<String,Object> requestBody){
-        double amount = (double) requestBody.get("amount");
-        int updatedCount = accountRepository.findAndIncrementBalanceByAccountNum(accountNum,amount);
-        if(updatedCount<1){
-            return ResponseEntity.notFound().build();
-        }
-        return ResponseEntity.ok("{\"message\": \"success\"}");
+    public Mono<Message> debitAccount(@PathVariable String accountNum, @RequestBody Map<String,Object> requestBody){
+        double amount = ((Number)requestBody.get("amount")).doubleValue();
+        Mono<Long> updatedCount = accountRepository.findAndIncrementBalanceByAccountNum(accountNum,amount);
+        return updatedCount.map(count -> {
+            if(count<1) {
+                throw new ResponseStatusException(HttpStatus.NOT_FOUND,"Account Not Found");
+            }
+            return new Message("success");
+        });
     }
 
     @PostMapping("/account/{accountNum}/credit")
-    public ResponseEntity<String> creditAccount(@PathVariable String accountNum, @RequestBody Map<String,Object> requestBody){
-        double amount = (double) requestBody.get("amount");
-        try {
-            int updatedCount = accountRepository.findAndIncrementBalanceByAccountNum(accountNum, -amount);
-            if (updatedCount < 1) {
-                return ResponseEntity.notFound().build();
-            }
-            return ResponseEntity.ok("{\"message\": \"success\"}");
-        }catch(DataIntegrityViolationException e){
-            System.out.println(e.getMessage());
+    public Mono<Message> creditAccount(@PathVariable String accountNum, @RequestBody Map<String,Object> requestBody){
+        double amount = ((Number)requestBody.get("amount")).doubleValue();
+        Mono<Long> updatedCount = accountRepository.findAndIncrementBalanceByAccountNum(accountNum, -amount);
+        return updatedCount
+                .map(count ->{
+                    if(count<1){
+                        throw new ResponseStatusException(HttpStatus.NOT_FOUND,"Account Not Found");
+                    }
+                    return new Message("success");
+                })
+                .doOnError(DataIntegrityViolationException.class, e->{
 
-            //log failed transaction
-            List<Txn.Entry> entries = new ArrayList<>();
-            entries.add(new Txn.Entry(accountNum,amount));
-            Txn txn = new Txn(entries,Txn.Status.FAILED,Txn.ErrorReason.INSUFFICIENT_BALANCE,LocalDateTime.now());
-            Txn txnSaved = txnRepository.save(txn);
+                    List<Txn.Entry> entries = new ArrayList<>();
+                    entries.add(new Txn.Entry(accountNum,amount));
+                    Txn txn = new Txn(entries,Txn.Status.FAILED,Txn.ErrorReason.INSUFFICIENT_BALANCE,LocalDateTime.now());
 
-            return ResponseEntity.unprocessableEntity().body("{\"message\": \"Insufficient balance\"}");
-        }
-
+                    //start async process save transaction;
+                    Mono.defer(() -> txnRepository.save(txn))
+                            .subscribeOn(Schedulers.boundedElastic())
+                            .subscribe();
+                })
+                .onErrorMap(DataIntegrityViolationException.class, e -> new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Insufficient Balance"));
     }
 
+    @Transactional
     @PostMapping("/account/{from}/transfer")
-    public ResponseEntity<String> transfer(@PathVariable String from, @RequestBody TransferRequest transferRequest){
+    public Mono<Message> transfer(@PathVariable String from, @RequestBody TransferRequest transferRequest){
 
         String to = transferRequest.to;
-        double amount = transferRequest.amount;
+        double amount = ((Number)transferRequest.amount).doubleValue();
 
         Txn txn = new Txn();
         txn.addEntry(new Txn.Entry(from,-amount));
         txn.addEntry(new Txn.Entry(to,amount));
 
-        txn = txnRepository.save(txn);
-
-        try{
-            performTransaction(txn);
-            txnRepository.findAndUpdateStatusById(txn.getId(), Txn.Status.SUCCESS);
-        }catch(DataIntegrityViolationException e){
-            System.out.println(e.getMessage());
-            txnRepository.findAndUpdateStatusById(txn.getId(), Txn.Status.FAILED, Txn.ErrorReason.INSUFFICIENT_BALANCE,Txn.ErrorReason.INSUFFICIENT_BALANCE.code);
-            return ResponseEntity.unprocessableEntity().body("{\"message\": \"Insufficient balance\"}");
-        }
-
-
-        return ResponseEntity.ok("{\"message\": \"success\"}");
+        return txnRepository.save(txn).then(
+                performTransaction(txn)
+                        .doOnComplete(()-> {
+                            Mono.defer(() -> txnRepository.findAndUpdateStatusById(txn.getId(), Txn.Status.SUCCESS))
+                                    .subscribeOn(Schedulers.boundedElastic())
+                                    .subscribe();
+                        })
+                        .then(Mono.just(new Message("success")))
+                        .doOnError(DataIntegrityViolationException.class, e->{
+                            txn.setStatus(Txn.Status.FAILED);
+                            txn.setErrorReason(Txn.ErrorReason.INSUFFICIENT_BALANCE);
+                            //start async process save transaction;
+                            Mono.defer(() -> txnRepository.save(txn))
+                                    .subscribeOn(Schedulers.boundedElastic())
+                                    .subscribe();
+                        })
+                        .onErrorMap(DataIntegrityViolationException.class, e -> new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Insufficient Balance"))
+        );
     }
 
-    @Transactional
-    void performTransaction(Txn txn){
-        for(Txn.Entry entry : txn.getEntries()){
-            accountRepository.findAndIncrementBalanceByAccountNum(entry.getAccountNum(),entry.getAmount());
-        }
+    Flux<Long> performTransaction(Txn txn){
+        return Flux.fromIterable(txn.getEntries()).flatMap(entry-> accountRepository.findAndIncrementBalanceByAccountNum(entry.getAccountNum(), entry.getAmount()));
     }
+
+    @Autowired
+    ReactiveMongoOperations reactiveOps;
 
     public static class TransferRequest{
         private String to;
@@ -106,6 +119,16 @@ public class AccountController {
         public TransferRequest(String to, double amount) {
             this.to = to;
             this.amount = amount;
+        }
+    }
+
+    public static class Message{
+        private String message;
+        public Message(String message){
+            this.message = message;
+        }
+        public String getMessage(){
+            return this.message;
         }
 
     }

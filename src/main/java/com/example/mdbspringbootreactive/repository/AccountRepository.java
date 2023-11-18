@@ -3,13 +3,15 @@ package com.example.mdbspringbootreactive.repository;
 import com.example.mdbspringbootreactive.model.Account;
 import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
+import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
 import org.springframework.data.mongodb.repository.Update;
+import reactor.core.publisher.Mono;
 
-public interface AccountRepository extends MongoRepository<Account,String> {
+public interface AccountRepository extends ReactiveMongoRepository<Account,String> {
     @Query("{accountNum:'?0'}")
-    Account findByAccountNum(String accountNum);
+    Mono<Account> findByAccountNum(String accountNum);
 
     @Update("{'$inc':{'balance': ?1}}")
-    int findAndIncrementBalanceByAccountNum(String accountNum, double increment);
+    Mono<Long> findAndIncrementBalanceByAccountNum(String accountNum, double increment);
 
 }

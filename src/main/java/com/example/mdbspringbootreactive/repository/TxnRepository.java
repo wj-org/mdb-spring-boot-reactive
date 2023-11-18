@@ -2,16 +2,17 @@ package com.example.mdbspringbootreactive.repository;
 
 import com.example.mdbspringbootreactive.model.Account;
 import com.example.mdbspringbootreactive.model.Txn;
-import org.springframework.data.mongodb.repository.MongoRepository;
 import org.springframework.data.mongodb.repository.Query;
+import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
 import org.springframework.data.mongodb.repository.Update;
+import reactor.core.publisher.Mono;
 
-public interface TxnRepository extends MongoRepository<Txn,String> {
+public interface TxnRepository extends ReactiveMongoRepository<Txn,String> {
 
     @Update("{'$set':{'status':'?1'}}")
-    void findAndUpdateStatusById(String id, Txn.Status status);
+    Mono<Void> findAndUpdateStatusById(String id, Txn.Status status);
 
     @Update("{'$set':{'status':'?1', 'errorReason':'?2', 'errorCode':'?3'}}")
-    void findAndUpdateStatusById(String id, Txn.Status status, Txn.ErrorReason errorReason, int errorCode);
+    Mono<Long> findAndUpdateStatusById(String id, Txn.Status status, Txn.ErrorReason errorReason, int errorCode);
 
 }
