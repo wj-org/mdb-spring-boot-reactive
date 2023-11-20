@@ -42,7 +42,8 @@ public class Txn {
 
     public enum ErrorReason {
         OTHERS(-1),
-        INSUFFICIENT_BALANCE(-2);
+        INSUFFICIENT_BALANCE(-2),
+        MISSING_ACCOUNT(-3);
 
         public final int code;
         private ErrorReason(int code){
