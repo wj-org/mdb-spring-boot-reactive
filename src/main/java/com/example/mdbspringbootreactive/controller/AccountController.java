@@ -92,7 +92,7 @@ public class AccountController {
                 executeTransaction(txn)
                         .doOnComplete(()-> {
                             Mono.defer(() -> txnRepository.findAndUpdateStatusById(txn.getId(), Txn.Status.SUCCESS))
-                                    .subscribeOn(Schedulers.boundedElastic())
+                                    .subscribeOn(Schedulers.parallel())
                                     .subscribe();
                         })
 
@@ -101,7 +101,7 @@ public class AccountController {
                             txn.setStatus(Txn.Status.FAILED);
                             txn.setErrorReason(Txn.ErrorReason.INSUFFICIENT_BALANCE);
                             Mono.defer(() -> txnRepository.save(txn))
-                                    .subscribeOn(Schedulers.boundedElastic())
+                                    .subscribeOn(Schedulers.parallel())
                                     .subscribe();
                         })
                         .onErrorMap(DataIntegrityViolationException.class, e -> new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Insufficient Balance"))
@@ -118,7 +118,7 @@ public class AccountController {
                             txn.setErrorReason(Txn.ErrorReason.MISSING_ACCOUNT);
                             //start async process to save transaction;
                             Mono.defer(() -> txnRepository.save(txn))
-                                    .subscribeOn(Schedulers.boundedElastic())
+                                    .subscribeOn(Schedulers.parallel())
                                     .subscribe();
                         })
                         .onErrorMap(AccountNotFoundException.class, e -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Account Not Found"))
