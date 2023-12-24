@@ -1,5 +1,8 @@
 package com.example.mdbspringbootreactive.controller;
 
+import com.example.mdbspringbootreactive.entity.AccountNotFoundException;
+import com.example.mdbspringbootreactive.entity.TransferRequest;
+import com.example.mdbspringbootreactive.entity.Message;
 import com.example.mdbspringbootreactive.model.Account;
 import com.example.mdbspringbootreactive.model.Txn;
 import com.example.mdbspringbootreactive.repository.AccountRepository;
@@ -50,35 +53,14 @@ public class AccountController {
         txn.addEntry(new Txn.Entry(accountNum,-amount));
 
         return handleTransaction(txn);
-//        double amount = ((Number)requestBody.get("amount")).doubleValue();
-//        Mono<Long> updatedCount = accountRepository.findAndIncrementBalanceByAccountNum(accountNum, -amount);
-//        return updatedCount
-//                .map(count ->{
-//                    if(count<1){
-//                        throw new ResponseStatusException(HttpStatus.NOT_FOUND,"Account Not Found");
-//                    }
-//                    return new Message("success");
-//                })
-//                .doOnError(DataIntegrityViolationException.class, e->{
-//
-//                    List<Txn.Entry> entries = new ArrayList<>();
-//                    entries.add(new Txn.Entry(accountNum,amount));
-//                    Txn txn = new Txn(entries,Txn.Status.FAILED,Txn.ErrorReason.INSUFFICIENT_BALANCE,LocalDateTime.now());
-//
-//                    //start async process save transaction;
-//                    Mono.defer(() -> txnRepository.save(txn))
-//                            .subscribeOn(Schedulers.boundedElastic())
-//                            .subscribe();
-//                })
-//                .onErrorMap(DataIntegrityViolationException.class, e -> new ResponseStatusException(HttpStatus.UNPROCESSABLE_ENTITY, "Insufficient Balance"));
     }
 
     @Transactional
     @PostMapping("/account/{from}/transfer")
     public Mono<Message> transfer(@PathVariable String from, @RequestBody TransferRequest transferRequest){
 
-        String to = transferRequest.to;
-        double amount = ((Number)transferRequest.amount).doubleValue();
+        String to = transferRequest.getTo();
+        double amount = ((Number)transferRequest.getAmount()).doubleValue();
 
         Txn txn = new Txn();
         txn.addEntry(new Txn.Entry(from,-amount));
@@ -130,30 +112,4 @@ public class AccountController {
         return Flux.fromIterable(txn.getEntries()).flatMap(entry-> accountRepository.findAndIncrementBalanceByAccountNum(entry.getAccountNum(), entry.getAmount()));
     }
 
-    public static class AccountNotFoundException extends RuntimeException{
-        AccountNotFoundException(){
-            super("Account Not Found");
-        }
-    }
-
-    public static class TransferRequest{
-        private String to;
-        private double amount;
-
-        public TransferRequest(String to, double amount) {
-            this.to = to;
-            this.amount = amount;
-        }
-    }
-
-    public static class Message{
-        private String message;
-        public Message(String message){
-            this.message = message;
-        }
-        public String getMessage(){
-            return this.message;
-        }
-
-    }
 }
