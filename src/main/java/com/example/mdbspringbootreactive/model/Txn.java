@@ -1,5 +1,6 @@
 package com.example.mdbspringbootreactive.model;
 
+import com.example.mdbspringbootreactive.enumeration.ErrorReason;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -40,23 +41,11 @@ public class Txn {
         FAILED
     }
 
-    public enum ErrorReason {
-        OTHERS(-1),
-        INSUFFICIENT_BALANCE(-2),
-        MISSING_ACCOUNT(-3);
-
-        public final int code;
-        private ErrorReason(int code){
-            this.code = code;
-        }
-    }
     @Id
     private String id;
     private List<Entry> entries;
 
     private Status status;
-
-    private int errorCode;
 
     private LocalDateTime transactionDate;
 
@@ -65,7 +54,6 @@ public class Txn {
     public Txn(List<Entry> entries, Status status, ErrorReason errorReason, LocalDateTime transactionDate) {
         this.entries = entries;
         this.status = status;
-        this.errorCode = errorReason.code;
         this.errorReason = errorReason;
         this.transactionDate = transactionDate;
     }

@@ -1,6 +1,7 @@
 package com.example.mdbspringbootreactive.controller;
 
-import com.example.mdbspringbootreactive.entity.AccountNotFoundException;
+import com.example.mdbspringbootreactive.enumeration.ErrorReason;
+import com.example.mdbspringbootreactive.exception.AccountNotFoundException;
 import com.example.mdbspringbootreactive.entity.ResponseMessage;
 import com.example.mdbspringbootreactive.entity.TransferRequest;
 import com.example.mdbspringbootreactive.model.Account;
@@ -97,18 +98,18 @@ public Mono<ResponseMessage> transfer(@PathVariable String from, @RequestBody Tr
 
 
     @ExceptionHandler(AccountNotFoundException.class)
-    ResponseEntity AccountNotFound(AccountNotFoundException ex) {
-        return ResponseEntity.notFound().build();
+    ResponseEntity<ResponseMessage> AccountNotFound(AccountNotFoundException ex) {
+        return ResponseEntity.badRequest().body(new ResponseMessage(ErrorReason.ACCOUNT_NOT_FOUND.name()));
     }
 
     @ExceptionHandler(DuplicateKeyException.class)
-    ResponseEntity DuplicateAccount(DuplicateKeyException ex) {
-        return ResponseEntity.badRequest().body(new ResponseMessage("Duplicate Account"));
+    ResponseEntity<ResponseMessage> DuplicateAccount(DuplicateKeyException ex) {
+        return ResponseEntity.badRequest().body(new ResponseMessage(ErrorReason.DUPLICATE_ACCOUNT.name()));
     }
 
     @ExceptionHandler(DataIntegrityViolationException.class)
-    ResponseEntity InsufficientBalance(DataIntegrityViolationException ex) {
-        return ResponseEntity.unprocessableEntity().body(new ResponseMessage("Insufficient Balance"));
+    ResponseEntity<ResponseMessage> InsufficientBalance(DataIntegrityViolationException ex) {
+        return ResponseEntity.unprocessableEntity().body(new ResponseMessage(ErrorReason.INSUFFICIENT_BALANCE.name()));
     }
 
 }
