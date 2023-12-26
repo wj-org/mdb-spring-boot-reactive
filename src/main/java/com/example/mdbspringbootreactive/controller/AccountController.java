@@ -87,12 +87,11 @@ public Mono<ResponseMessage> transfer(@PathVariable String from, @RequestBody Tr
     String to = transferRequest.getTo();
     double amount = ((Number)transferRequest.getAmount()).doubleValue();
     Txn txn = new Txn();
-    txn.addEntry(new Txn.Entry(to,amount));
     txn.addEntry(new Txn.Entry(from,-amount));
     txn.addEntry(new Txn.Entry(to,amount));
     //save pending transaction then execute
     return txnService.saveTransaction(txn)
-            .then(txnService.executeTxn(txn))
+            .flatMap(txnService::executeTxn)
             .then(Mono.just(new ResponseMessage("success")));
 }
 
