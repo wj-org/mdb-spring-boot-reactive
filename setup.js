@@ -1,4 +1,6 @@
+
 db=db.getSiblingDB("txn-demo");
+db.dropDatabase();
 
 db.createCollection("accounts",{
   "validator": {

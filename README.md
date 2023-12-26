@@ -4,7 +4,7 @@ reactive Java Spring Boot.
 
 ## Initialization and Setup
 1. Ensure you have access to a MongoDB cluster
-2. Run `mongosh "<MongoDB connection string>" --file setup.js` to setup schema validation. This creates a constraint such that the "balance" should never be less than 0.
+2. Run `mongosh "<MongoDB connection string>" --file setup.js` to set up schema validation. This creates a constraint such that the "balance" should never be less than 0.
 3. Create application.properties file in resources and add the following lines 
 ```
 spring.data.mongodb.uri=<MongoDB connection string>
