@@ -26,6 +26,10 @@ public class TxnService {
         return txnRepository.save(txn);
     }
 
+//------------------------------------------------------
+//Using @Transactional annotation to manage transactions
+//------------------------------------------------------
+//
 //    @Transactional
 //    public Mono<Void> executeTxn(Txn txn){
 //        return updateBalances(txn)
@@ -37,9 +41,10 @@ public class TxnService {
 //                })
 //                .then(txnRepository.findAndUpdateStatusById(txn.getId(), Txn.Status.SUCCESS));
 //    }
-//
 
-
+//---------------------------------------------------
+//Using Transactional Operator to manage transactions
+//---------------------------------------------------
     @Autowired
     TransactionalOperator transactionalOperator;
 
