@@ -21,39 +21,33 @@ public class TxnService {
     AccountRepository accountRepository;
 
 
-    public Mono<Txn> savePendingTransaction(Txn txn){
+    public Mono<Txn> saveTransaction(Txn txn){
         return txnRepository.save(txn);
     }
 
     @Transactional
-    public Mono<Void> handleTxn(Txn txn){
-        return executeTransactionSeq(txn)
-                        .doOnError(DataIntegrityViolationException.class, e->{
-                            txn.setStatus(Txn.Status.FAILED);
-                            txn.setErrorReason(ErrorReason.INSUFFICIENT_BALANCE);
-                            txnRepository.save(txn).subscribe();
-                        })
-                        .doOnError(AccountNotFoundException.class, e->{
-                            txn.setStatus(Txn.Status.FAILED);
-                            txn.setErrorReason(ErrorReason.ACCOUNT_NOT_FOUND);
-                            txnRepository.save(txn).subscribe();
-                        })
-                        .then(txnRepository.findAndUpdateStatusById(txn.getId(), Txn.Status.SUCCESS));
+    public Mono<Void> executeTxn(Txn txn){
+        return updateBalances(txn)
+                .doOnError(DataIntegrityViolationException.class, e->{
+                    txnRepository.findAndUpdateStatusById(txn.getId(), Txn.Status.FAILED,ErrorReason.INSUFFICIENT_BALANCE).subscribe();
+                })
+                .doOnError(AccountNotFoundException.class, e->{
+                    txnRepository.findAndUpdateStatusById(txn.getId(), Txn.Status.FAILED,ErrorReason.ACCOUNT_NOT_FOUND).subscribe();
+                })
+                .then(txnRepository.findAndUpdateStatusById(txn.getId(), Txn.Status.SUCCESS));
     }
 
-    public Flux<Long> executeTransactionSeq(Txn txn){
-        //update balance for every entry, concatMap maintains the sequence
+    public Flux<Long> updateBalances(Txn txn){
+        //read entries to update balances, concatMap maintains the sequence
         Flux<Long> updatedCounts = Flux.fromIterable(txn.getEntries()).concatMap(
                         entry-> accountRepository.findAndIncrementBalanceByAccountNum(entry.getAccountNum(), entry.getAmount()));
-
-        return updatedCounts.handle((updatedCount, sink)->{
-                    //1 account should be updated for every entry, otherwise it means account is missing
-                    if(updatedCount<1){
-                        throw new AccountNotFoundException();
-                    }else{
-                        sink.next(updatedCount);
-                    }
-                });
+        return updatedCounts.map(updatedCount->{
+            if(updatedCount<1){
+                throw new AccountNotFoundException();
+            }else{
+                return updatedCount;
+            }
+        });
     }
 
 }
