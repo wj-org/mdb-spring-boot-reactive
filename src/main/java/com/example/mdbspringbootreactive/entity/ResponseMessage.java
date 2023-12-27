@@ -1,7 +1,7 @@
 package com.example.mdbspringbootreactive.entity;
 
 public class ResponseMessage {
-    private String message;
+    private final String message;
     public ResponseMessage(String message){
         this.message = message;
     }
