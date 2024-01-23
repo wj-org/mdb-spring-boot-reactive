@@ -4,7 +4,7 @@ import com.mongodb.ConnectionString;
 import com.mongodb.MongoClientSettings;
 import com.mongodb.ReadConcern;
 import com.mongodb.WriteConcern;
-import org.springframework.beans.factory.annotation.Autowired;
+import com.mongodb.lang.NonNull;
 import org.springframework.boot.autoconfigure.mongo.MongoProperties;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -15,10 +15,14 @@ import org.springframework.data.mongodb.config.AbstractReactiveMongoConfiguratio
 @Configuration
 public class ReactiveMongoConfig extends AbstractReactiveMongoConfiguration {
 
-    @Autowired
     private MongoProperties mongoProperties;
 
+    public ReactiveMongoConfig(MongoProperties mongoProperties){
+        this.mongoProperties = mongoProperties;
+    }
+
     @Override
+    @NonNull
     protected String getDatabaseName() {
         return mongoProperties.getDatabase();
     }

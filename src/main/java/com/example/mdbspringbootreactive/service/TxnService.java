@@ -1,6 +1,7 @@
 package com.example.mdbspringbootreactive.service;
 
 import com.example.mdbspringbootreactive.enumeration.ErrorReason;
+import com.example.mdbspringbootreactive.enumeration.TxnStatus;
 import com.example.mdbspringbootreactive.exception.AccountNotFoundException;
 import com.example.mdbspringbootreactive.model.Txn;
 import com.example.mdbspringbootreactive.repository.AccountRepository;
@@ -8,18 +9,20 @@ import com.example.mdbspringbootreactive.repository.TxnRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
 
 @Service
 public class TxnService {
-    @Autowired
-    TxnRepository txnRepository;
+    private TxnRepository txnRepository;
 
-    @Autowired
-    AccountRepository accountRepository;
+    private AccountRepository accountRepository;
+
+    TxnService(TxnRepository txnRepository, AccountRepository accountRepository){
+        this.txnRepository = txnRepository;
+        this.accountRepository = accountRepository;
+    }
 
 
     public Mono<Txn> saveTransaction(Txn txn){
@@ -51,12 +54,12 @@ public class TxnService {
     public Mono<Void> executeTxn(Txn txn){
         return updateBalances(txn)
                 .doOnError(DataIntegrityViolationException.class, e->{
-                    txnRepository.findAndUpdateStatusById(txn.getId(), Txn.Status.FAILED,ErrorReason.INSUFFICIENT_BALANCE).subscribe();
+                    txnRepository.findAndUpdateStatusById(txn.getId(), TxnStatus.FAILED,ErrorReason.INSUFFICIENT_BALANCE).subscribe();
                 })
                 .doOnError(AccountNotFoundException.class, e->{
-                    txnRepository.findAndUpdateStatusById(txn.getId(), Txn.Status.FAILED,ErrorReason.ACCOUNT_NOT_FOUND).subscribe();
+                    txnRepository.findAndUpdateStatusById(txn.getId(), TxnStatus.FAILED,ErrorReason.ACCOUNT_NOT_FOUND).subscribe();
                 })
-                .then(txnRepository.findAndUpdateStatusById(txn.getId(), Txn.Status.SUCCESS))
+                .then(txnRepository.findAndUpdateStatusById(txn.getId(), TxnStatus.SUCCESS))
                 .as(transactionalOperator::transactional);
     }
 

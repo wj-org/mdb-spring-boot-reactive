@@ -1,6 +1,7 @@
 package com.example.mdbspringbootreactive.model;
 
 import com.example.mdbspringbootreactive.enumeration.ErrorReason;
+import com.example.mdbspringbootreactive.enumeration.TxnStatus;
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
 
@@ -10,48 +11,18 @@ import java.util.List;
 
 @Document("transactions")
 public class Txn {
-    public static class Entry {
-        public Entry(String accountNum, double amount) {
-            this.accountNum = accountNum;
-            this.amount = amount;
-        }
-
-        public String getAccountNum() {
-            return accountNum;
-        }
-
-        public void setAccountNum(String accountNum) {
-            this.accountNum = accountNum;
-        }
-
-        public double getAmount() {
-            return amount;
-        }
-
-        public void setAmount(double amount) {
-            this.amount = amount;
-        }
-
-        private String accountNum;
-        private double amount;
-    }
-    public enum Status {
-        PENDING,
-        SUCCESS,
-        FAILED
-    }
 
     @Id
     private String id;
-    private List<Entry> entries;
+    private List<TxnEntry> entries;
 
-    private Status status;
+    private TxnStatus status;
 
     private LocalDateTime transactionDate;
 
     private ErrorReason errorReason;
 
-    public Txn(List<Entry> entries, Status status, ErrorReason errorReason, LocalDateTime transactionDate) {
+    public Txn(List<TxnEntry> entries, TxnStatus status, ErrorReason errorReason, LocalDateTime transactionDate) {
         this.entries = entries;
         this.status = status;
         this.errorReason = errorReason;
@@ -60,11 +31,11 @@ public class Txn {
 
     public Txn(){
         this.entries = new ArrayList<>();
-        this.status = Status.PENDING;
+        this.status = TxnStatus.PENDING;
         this.transactionDate = LocalDateTime.now();
     }
 
-    public void addEntry(Entry entry){
+    public void addEntry(TxnEntry entry){
         entries.add(entry);
     }
 
@@ -76,19 +47,19 @@ public class Txn {
         this.id = id;
     }
 
-    public List<Entry> getEntries() {
+    public List<TxnEntry> getEntries() {
         return entries;
     }
 
-    public void setEntries(List<Entry> entries) {
+    public void setEntries(List<TxnEntry> entries) {
         this.entries = entries;
     }
 
-    public Status getStatus() {
+    public TxnStatus getStatus() {
         return status;
     }
 
-    public void setStatus(Status status) {
+    public void setStatus(TxnStatus status) {
         this.status = status;
     }
 

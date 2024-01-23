@@ -6,9 +6,9 @@ import com.example.mdbspringbootreactive.entity.ResponseMessage;
 import com.example.mdbspringbootreactive.entity.TransferRequest;
 import com.example.mdbspringbootreactive.model.Account;
 import com.example.mdbspringbootreactive.model.Txn;
+import com.example.mdbspringbootreactive.model.TxnEntry;
 import com.example.mdbspringbootreactive.repository.AccountRepository;
 import com.example.mdbspringbootreactive.service.TxnService;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.ResponseEntity;
@@ -18,10 +18,15 @@ import java.util.Map;
 
 @RestController
 public class AccountController {
-    @Autowired
+
     AccountRepository accountRepository;
-    @Autowired
+
     TxnService txnService;
+
+    public AccountController(AccountRepository accountRepository, TxnService txnService){
+        this.accountRepository = accountRepository;
+        this.txnService = txnService;
+    }
 
     @PostMapping("/account")
     public Mono<Account> createAccount(@RequestBody Account account){
@@ -38,7 +43,7 @@ public class AccountController {
     public Mono<ResponseMessage> debitAccount(@PathVariable String accountNum, @RequestBody Map<String,Object> requestBody){
         Txn txn = new Txn();
         double amount = ((Number)requestBody.get("amount")).doubleValue();
-        txn.addEntry(new Txn.Entry(accountNum,amount));
+        txn.addEntry(new TxnEntry(accountNum,amount));
         return txnService.saveTransaction(txn)
                 .flatMap(txnService::executeTxn)
                 .then(Mono.just(new ResponseMessage("success")));
@@ -48,7 +53,7 @@ public class AccountController {
     public Mono<ResponseMessage> creditAccount(@PathVariable String accountNum, @RequestBody Map<String,Object> requestBody){
         Txn txn = new Txn();
         double amount = ((Number)requestBody.get("amount")).doubleValue();
-        txn.addEntry(new Txn.Entry(accountNum,-amount));
+        txn.addEntry(new TxnEntry(accountNum,-amount));
         return txnService.saveTransaction(txn)
                 .flatMap(txnService::executeTxn)
                 .then(Mono.just(new ResponseMessage("success")));
@@ -60,8 +65,8 @@ public class AccountController {
         String to = transferRequest.getTo();
         double amount = ((Number)transferRequest.getAmount()).doubleValue();
         Txn txn = new Txn();
-        txn.addEntry(new Txn.Entry(from,-amount));
-        txn.addEntry(new Txn.Entry(to,amount));
+        txn.addEntry(new TxnEntry(from,-amount));
+        txn.addEntry(new TxnEntry(to,amount));
         //save pending transaction then execute
         return txnService.saveTransaction(txn)
                 .flatMap(txnService::executeTxn)

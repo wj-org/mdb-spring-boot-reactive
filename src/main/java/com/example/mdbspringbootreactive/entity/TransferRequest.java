@@ -1,6 +1,14 @@
 package com.example.mdbspringbootreactive.entity;
 
 public class TransferRequest {
+
+    private String to;
+    private double amount;
+
+    public TransferRequest(String to, double amount) {
+        this.to = to;
+        this.amount = amount;
+    }
     public String getTo() {
         return to;
     }
@@ -14,14 +22,6 @@ public class TransferRequest {
     }
 
     public void setAmount(double amount) {
-        this.amount = amount;
-    }
-
-    private String to;
-    private double amount;
-
-    public TransferRequest(String to, double amount) {
-        this.to = to;
         this.amount = amount;
     }
 
