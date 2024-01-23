@@ -9,6 +9,7 @@ import com.example.mdbspringbootreactive.template.TxnTemplate;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.reactive.TransactionalOperator;
 import reactor.core.publisher.Flux;
 import reactor.core.publisher.Mono;
@@ -34,15 +35,15 @@ public class TxnService {
 //------------------------------------------------------
 //
 //    @Transactional
-//    public Mono<Void> executeTxn(Txn txn){
+//    public Mono<Txn> executeTxn(Txn txn){
 //        return updateBalances(txn)
 //                .doOnError(DataIntegrityViolationException.class, e->{
-//                    txnRepository.findAndUpdateStatusById(txn.getId(), Txn.Status.FAILED,ErrorReason.INSUFFICIENT_BALANCE).subscribe();
+//                    txnTemplate.findAndUpdateStatusById(txn.getId(), TxnStatus.FAILED,ErrorReason.INSUFFICIENT_BALANCE).subscribe();
 //                })
 //                .doOnError(AccountNotFoundException.class, e->{
-//                    txnRepository.findAndUpdateStatusById(txn.getId(), Txn.Status.FAILED,ErrorReason.ACCOUNT_NOT_FOUND).subscribe();
+//                    txnTemplate.findAndUpdateStatusById(txn.getId(), TxnStatus.FAILED,ErrorReason.ACCOUNT_NOT_FOUND).subscribe();
 //                })
-//                .then(txnRepository.findAndUpdateStatusById(txn.getId(), Txn.Status.SUCCESS));
+//                .then(txnTemplate.findAndUpdateStatusById(txn.getId(), TxnStatus.SUCCESS));
 //    }
 
 //---------------------------------------------------
