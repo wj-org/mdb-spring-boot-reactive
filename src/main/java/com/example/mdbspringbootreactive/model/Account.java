@@ -26,7 +26,6 @@ public class Account {
 
     public Account(String accountNum, double balance) {
         super();
-//        this.id = id;
         this.accountNum = accountNum;
         this.balance = balance;
     }

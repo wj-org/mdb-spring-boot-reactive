@@ -40,28 +40,26 @@ public class AccountController {
     }
 
     @PostMapping("/account/{accountNum}/debit")
-    public Mono<ResponseMessage> debitAccount(@PathVariable String accountNum, @RequestBody Map<String,Object> requestBody){
+    public Mono<Txn> debitAccount(@PathVariable String accountNum, @RequestBody Map<String,Object> requestBody){
         Txn txn = new Txn();
         double amount = ((Number)requestBody.get("amount")).doubleValue();
         txn.addEntry(new TxnEntry(accountNum,amount));
         return txnService.saveTransaction(txn)
-                .flatMap(txnService::executeTxn)
-                .then(Mono.just(new ResponseMessage("success")));
+                .flatMap(txnService::executeTxn);
     }
 
     @PostMapping("/account/{accountNum}/credit")
-    public Mono<ResponseMessage> creditAccount(@PathVariable String accountNum, @RequestBody Map<String,Object> requestBody){
+    public Mono<Txn> creditAccount(@PathVariable String accountNum, @RequestBody Map<String,Object> requestBody){
         Txn txn = new Txn();
         double amount = ((Number)requestBody.get("amount")).doubleValue();
         txn.addEntry(new TxnEntry(accountNum,-amount));
         return txnService.saveTransaction(txn)
-                .flatMap(txnService::executeTxn)
-                .then(Mono.just(new ResponseMessage("success")));
+                .flatMap(txnService::executeTxn);
     }
 
 
     @PostMapping("/account/{from}/transfer")
-    public Mono<ResponseMessage> transfer(@PathVariable String from, @RequestBody TransferRequest transferRequest){
+    public Mono<Txn> transfer(@PathVariable String from, @RequestBody TransferRequest transferRequest){
         String to = transferRequest.getTo();
         double amount = ((Number)transferRequest.getAmount()).doubleValue();
         Txn txn = new Txn();
@@ -69,8 +67,7 @@ public class AccountController {
         txn.addEntry(new TxnEntry(to,amount));
         //save pending transaction then execute
         return txnService.saveTransaction(txn)
-                .flatMap(txnService::executeTxn)
-                .then(Mono.just(new ResponseMessage("success")));
+                .flatMap(txnService::executeTxn);
     }
 
 
