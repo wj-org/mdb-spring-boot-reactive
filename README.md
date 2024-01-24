@@ -68,4 +68,12 @@ Request Body:
 }
 ```
 
+## Postman Test Collection
+The Postman Test Collection is meant for a high-level functional test to ensure that the APIs are still functionally correct.
+The Postman calls are meant to be run in sequence and the database needs to be in a clean slate (see step 3).
+To run the test:
+1. Import the collection into Postman
+2. In Postman, add environment variables "host" and "port"
+3. In command line, run `mongosh "<MongoDB connection string>" --file setup.js` to reset the database.
+4. Use Postman to "Run collection" to automatically run all the Postman calls in sequence and see that the tests are passing.
 
