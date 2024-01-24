@@ -3,6 +3,7 @@ package com.example.mdbspringbootreactive.service;
 import com.example.mdbspringbootreactive.enumeration.ErrorReason;
 import com.example.mdbspringbootreactive.enumeration.TxnStatus;
 import com.example.mdbspringbootreactive.exception.AccountNotFoundException;
+import com.example.mdbspringbootreactive.exception.TransactionException;
 import com.example.mdbspringbootreactive.model.Txn;
 import com.example.mdbspringbootreactive.repository.AccountRepository;
 import com.example.mdbspringbootreactive.template.TxnTemplate;
@@ -33,15 +34,19 @@ public class TxnService {
 //------------------------------------------------------
 //Using @Transactional annotation to manage transactions
 //------------------------------------------------------
-//
+
 //    @Transactional
 //    public Mono<Txn> executeTxn(Txn txn){
 //        return updateBalances(txn)
-//                .doOnError(DataIntegrityViolationException.class, e->{
-//                    txnTemplate.findAndUpdateStatusById(txn.getId(), TxnStatus.FAILED,ErrorReason.INSUFFICIENT_BALANCE).subscribe();
+//                .onErrorResume(DataIntegrityViolationException.class, e ->{
+//                    txn.setStatus(TxnStatus.FAILED);
+//                    txn.setErrorReason(ErrorReason.INSUFFICIENT_BALANCE);
+//                    return Mono.error(new TransactionException(txn));
 //                })
-//                .doOnError(AccountNotFoundException.class, e->{
-//                    txnTemplate.findAndUpdateStatusById(txn.getId(), TxnStatus.FAILED,ErrorReason.ACCOUNT_NOT_FOUND).subscribe();
+//                .onErrorResume(AccountNotFoundException.class, e ->{
+//                    txn.setStatus(TxnStatus.FAILED);
+//                    txn.setErrorReason(ErrorReason.ACCOUNT_NOT_FOUND);
+//                    return Mono.error(new TransactionException(txn));
 //                })
 //                .then(txnTemplate.findAndUpdateStatusById(txn.getId(), TxnStatus.SUCCESS));
 //    }
@@ -54,11 +59,15 @@ public class TxnService {
 
     public Mono<Txn> executeTxn(Txn txn){
         return updateBalances(txn)
-                .doOnError(DataIntegrityViolationException.class, e->{
-                    txnTemplate.findAndUpdateStatusById(txn.getId(), TxnStatus.FAILED,ErrorReason.INSUFFICIENT_BALANCE).subscribe();
+                .onErrorResume(DataIntegrityViolationException.class, e ->{
+                    txn.setStatus(TxnStatus.FAILED);
+                    txn.setErrorReason(ErrorReason.INSUFFICIENT_BALANCE);
+                    return Mono.error(new TransactionException(txn));
                 })
-                .doOnError(AccountNotFoundException.class, e->{
-                    txnTemplate.findAndUpdateStatusById(txn.getId(), TxnStatus.FAILED,ErrorReason.ACCOUNT_NOT_FOUND).subscribe();
+                .onErrorResume(AccountNotFoundException.class, e ->{
+                    txn.setStatus(TxnStatus.FAILED);
+                    txn.setErrorReason(ErrorReason.ACCOUNT_NOT_FOUND);
+                    return Mono.error(new TransactionException(txn));
                 })
                 .then(txnTemplate.findAndUpdateStatusById(txn.getId(), TxnStatus.SUCCESS))
                 .as(transactionalOperator::transactional);

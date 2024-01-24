@@ -4,12 +4,12 @@ import com.example.mdbspringbootreactive.enumeration.ErrorReason;
 import com.example.mdbspringbootreactive.exception.AccountNotFoundException;
 import com.example.mdbspringbootreactive.entity.ResponseMessage;
 import com.example.mdbspringbootreactive.entity.TransferRequest;
+import com.example.mdbspringbootreactive.exception.TransactionException;
 import com.example.mdbspringbootreactive.model.Account;
 import com.example.mdbspringbootreactive.model.Txn;
 import com.example.mdbspringbootreactive.model.TxnEntry;
 import com.example.mdbspringbootreactive.repository.AccountRepository;
 import com.example.mdbspringbootreactive.service.TxnService;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -18,6 +18,7 @@ import java.util.Map;
 
 @RestController
 public class AccountController {
+
 
     AccountRepository accountRepository;
 
@@ -72,18 +73,18 @@ public class AccountController {
 
 
     @ExceptionHandler(AccountNotFoundException.class)
-    ResponseEntity<ResponseMessage> AccountNotFound(AccountNotFoundException ex) {
+    ResponseEntity<ResponseMessage> accountNotFound(AccountNotFoundException ex) {
         return ResponseEntity.badRequest().body(new ResponseMessage(ErrorReason.ACCOUNT_NOT_FOUND.name()));
     }
 
     @ExceptionHandler(DuplicateKeyException.class)
-    ResponseEntity<ResponseMessage> DuplicateAccount(DuplicateKeyException ex) {
+    ResponseEntity<ResponseMessage> duplicateAccount(DuplicateKeyException ex) {
         return ResponseEntity.badRequest().body(new ResponseMessage(ErrorReason.DUPLICATE_ACCOUNT.name()));
     }
 
-    @ExceptionHandler(DataIntegrityViolationException.class)
-    ResponseEntity<ResponseMessage> InsufficientBalance(DataIntegrityViolationException ex) {
-        return ResponseEntity.unprocessableEntity().body(new ResponseMessage(ErrorReason.INSUFFICIENT_BALANCE.name()));
+    @ExceptionHandler(TransactionException.class)
+    ResponseEntity<Mono<Txn>> insufficientBalance(TransactionException ex) {
+        return ResponseEntity.unprocessableEntity().body(txnService.saveTransaction(ex.getTxn()));
     }
 
 }
