@@ -5,6 +5,15 @@ import org.springframework.data.mongodb.core.mapping.Document;
 @Document("accounts")
 public class Account {
 
+    private String accountNum;
+    private double balance;
+
+    public Account(String accountNum, double balance) {
+        super();
+        this.accountNum = accountNum;
+        this.balance = balance;
+    }
+
     public String getAccountNum() {
         return accountNum;
     }
@@ -18,15 +27,6 @@ public class Account {
     }
 
     public void setBalance(double balance) {
-        this.balance = balance;
-    }
-
-    private String accountNum;
-    private double balance;
-
-    public Account(String accountNum, double balance) {
-        super();
-        this.accountNum = accountNum;
         this.balance = balance;
     }
 

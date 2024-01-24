@@ -17,27 +17,27 @@ import static org.springframework.data.mongodb.core.query.Update.update;
 @Service
 public class TxnTemplate {
 
-    private ReactiveMongoTemplate template;
+    private final ReactiveMongoTemplate template;
 
-    public TxnTemplate(ReactiveMongoTemplate template){
+    public TxnTemplate(ReactiveMongoTemplate template) {
         this.template = template;
     }
 
-    public Mono<Txn> save(Txn txn){
+    public Mono<Txn> save(Txn txn) {
         return template.save(txn);
     }
 
-    public Mono<Txn> findAndUpdateStatusById(String id, TxnStatus status){
+    public Mono<Txn> findAndUpdateStatusById(String id, TxnStatus status) {
         Query query = query(where("_id").is(id));
-        Update update = update("status",status);
+        Update update = update("status", status);
         FindAndModifyOptions options = FindAndModifyOptions.options().returnNew(true);
-        return template.findAndModify(query,update,options,Txn.class);
+        return template.findAndModify(query, update, options, Txn.class);
     }
 
-    public Mono<Txn> findAndUpdateStatusById(String id, TxnStatus status, ErrorReason errorReason){
+    public Mono<Txn> findAndUpdateStatusById(String id, TxnStatus status, ErrorReason errorReason) {
         Query query = query(where("_id").is(id));
-        Update update = update("status",status).set("errorReason",errorReason);
+        Update update = update("status", status).set("errorReason", errorReason);
         FindAndModifyOptions options = FindAndModifyOptions.options().returnNew(true);
-        return template.findAndModify(query,update,options,Txn.class);
+        return template.findAndModify(query, update, options, Txn.class);
     }
 }

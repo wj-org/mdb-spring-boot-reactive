@@ -29,13 +29,13 @@ public class Txn {
         this.transactionDate = transactionDate;
     }
 
-    public Txn(){
+    public Txn() {
         this.entries = new ArrayList<>();
         this.status = TxnStatus.PENDING;
         this.transactionDate = LocalDateTime.now();
     }
 
-    public void addEntry(TxnEntry entry){
+    public void addEntry(TxnEntry entry) {
         entries.add(entry);
     }
 

@@ -9,6 +9,7 @@ public class TransferRequest {
         this.to = to;
         this.amount = amount;
     }
+
     public String getTo() {
         return to;
     }
