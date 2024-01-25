@@ -1,5 +1,5 @@
 ## About
-This application runs on reactive Java Spring Boot application with MongoDB Reactive Streams Driver. The project demostrates how you can perform ACID transactions in a very simplifed banking application.
+This application runs on reactive Java Spring Boot application with MongoDB Reactive Streams Driver. The project demonstrates how you can perform ACID transactions in a very simplified banking application.
 
 ## How it should work
 1. A bank account can be created with a unique accountNum, and it always starts with a balance of $0.
@@ -18,7 +18,7 @@ This application runs on reactive Java Spring Boot application with MongoDB Reac
 1. Ensure you have access to a MongoDB cluster
 2. Run `mongosh "<MongoDB connection string>" --file setup.js` to set up schema validation. This creates a constraint such that the "balance" should never be less than 0.
 3. Create application.properties file in resources and add the following lines 
-```
+```properties
 spring.data.mongodb.uri=<MongoDB connection string>
 spring.data.mongodb.database=txn-demo
  ```
@@ -30,7 +30,7 @@ spring.data.mongodb.database=txn-demo
 ### Create account
 POST /account \
 Request Body:
-```
+```json
 {
   accountNum: <String>,
   balance: <Number>
@@ -43,7 +43,7 @@ GET /account/{accountNum}
 ### Debit to account
 POST /account/{accountNum}/debit \
 Request Body:
-```
+```json
 {
   amount: <Number>
 }
@@ -52,7 +52,7 @@ Request Body:
 ### Credit from account
 POST /account/{accountNum}/credit \
 Request Body:
-```
+```json
 {
   amount: <Number>
 }
@@ -61,7 +61,7 @@ Request Body:
 ### Transfer to another account
 POST /account/{accountNum}/transfer \
 Request Body:
-```
+```json
 {
   to: <String>
   amount: <Number>
@@ -76,4 +76,3 @@ To run the test:
 2. In Postman, add environment variables "host" and "port"
 3. In command line, run `mongosh "<MongoDB connection string>" --file setup.js` to reset the database.
 4. Use Postman to "Run collection" to automatically run all the Postman calls in sequence and see that the tests are passing.
-

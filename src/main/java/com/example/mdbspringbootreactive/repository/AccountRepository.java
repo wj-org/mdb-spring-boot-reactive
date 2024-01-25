@@ -6,7 +6,7 @@ import org.springframework.data.mongodb.repository.ReactiveMongoRepository;
 import org.springframework.data.mongodb.repository.Update;
 import reactor.core.publisher.Mono;
 
-public interface AccountRepository extends ReactiveMongoRepository<Account,String> {
+public interface AccountRepository extends ReactiveMongoRepository<Account, String> {
     @Query("{accountNum:'?0'}")
     Mono<Account> findByAccountNum(String accountNum);
 

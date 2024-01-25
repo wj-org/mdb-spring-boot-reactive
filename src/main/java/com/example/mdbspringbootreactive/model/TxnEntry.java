@@ -1,6 +1,9 @@
 package com.example.mdbspringbootreactive.model;
 
 public class TxnEntry {
+    private String accountNum;
+    private double amount;
+
     public TxnEntry(String accountNum, double amount) {
         this.accountNum = accountNum;
         this.amount = amount;
@@ -21,7 +24,4 @@ public class TxnEntry {
     public void setAmount(double amount) {
         this.amount = amount;
     }
-
-    private String accountNum;
-    private double amount;
 }

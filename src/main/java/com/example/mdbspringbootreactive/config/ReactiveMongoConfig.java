@@ -15,9 +15,9 @@ import org.springframework.data.mongodb.config.AbstractReactiveMongoConfiguratio
 @Configuration
 public class ReactiveMongoConfig extends AbstractReactiveMongoConfiguration {
 
-    private MongoProperties mongoProperties;
+    private final MongoProperties mongoProperties;
 
-    public ReactiveMongoConfig(MongoProperties mongoProperties){
+    public ReactiveMongoConfig(MongoProperties mongoProperties) {
         this.mongoProperties = mongoProperties;
     }
 
@@ -30,8 +30,8 @@ public class ReactiveMongoConfig extends AbstractReactiveMongoConfiguration {
     @Override
     protected void configureClientSettings(MongoClientSettings.Builder builder) {
         builder.applyConnectionString(new ConnectionString(mongoProperties.getUri()))
-                .readConcern(ReadConcern.SNAPSHOT)
-                .writeConcern(WriteConcern.MAJORITY);
+               .readConcern(ReadConcern.SNAPSHOT)
+               .writeConcern(WriteConcern.MAJORITY);
     }
 
     @Bean
