@@ -30,7 +30,7 @@ spring.data.mongodb.database=txn-demo
 ### Create account
 POST /account \
 Request Body:
-```json
+```
 {
   accountNum: <String>,
   balance: <Number>
@@ -43,7 +43,7 @@ GET /account/{accountNum}
 ### Debit to account
 POST /account/{accountNum}/debit \
 Request Body:
-```json
+```
 {
   amount: <Number>
 }
@@ -52,7 +52,7 @@ Request Body:
 ### Credit from account
 POST /account/{accountNum}/credit \
 Request Body:
-```json
+```
 {
   amount: <Number>
 }
@@ -61,7 +61,7 @@ Request Body:
 ### Transfer to another account
 POST /account/{accountNum}/transfer \
 Request Body:
-```json
+```
 {
   to: <String>
   amount: <Number>
@@ -76,3 +76,4 @@ To run the test:
 2. In Postman, add environment variables "host" and "port"
 3. In command line, run `mongosh "<MongoDB connection string>" --file setup.js` to reset the database.
 4. Use Postman to "Run collection" to automatically run all the Postman calls in sequence and see that the tests are passing.
+
