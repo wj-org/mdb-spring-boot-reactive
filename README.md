@@ -1,5 +1,15 @@
+# Multi-document Transactions with Reactive Java Spring Boot
+
 ## About
-This application runs on reactive Java Spring Boot application with MongoDB Reactive Streams Driver. The project demonstrates how you can perform ACID transactions in a very simplified banking application.
+A simplified cash balance application built with reactive Java Spring Boot and Spring Data MongoDB. This project showcases:
+- Create, Read and Updates with ReactiveMongoRepository
+- Create, Read and Updates with ReactiveMongoTemplate
+- Wrapping queries in a multi-document transaction
+
+## Supported Versions
+- Java 21
+- Spring Boot Starter Webflux 3.2.3 
+- Spring Boot Starter Reactive Data Mongodb 3.2.3
 
 ## How it should work
 1. A bank account can be created with a unique accountNum, and it always starts with a balance of $0.
@@ -16,7 +26,10 @@ This application runs on reactive Java Spring Boot application with MongoDB Reac
 
 ## Initialization and Setup
 1. Ensure you have access to a MongoDB cluster
-2. Run `mongosh "<MongoDB connection string>" --file setup.js` to set up schema validation. This creates a constraint such that the "balance" should never be less than 0.
+2. Run the following to set up schema validation. This creates a constraint such that the "balance" should never be less than 0.
+```shell
+mongosh "<MongoDB connection string>" --file setup.js
+```
 3. Create application.properties file in resources and add the following lines 
 ```properties
 spring.data.mongodb.uri=<MongoDB connection string>
@@ -36,9 +49,21 @@ Request Body:
   balance: <Number>
 }
 ```
+Example:
+```shell
+curl --location 'localhost:8080/account' \
+--header 'Content-Type: application/json' \
+--data '{
+    "accountNum": "111111"
+}'
+```
 
 ### Get account
 GET /account/{accountNum}
+Example:
+```shell
+curl --location 'localhost:8080/account/111111'
+```
 
 ### Debit to account
 POST /account/{accountNum}/debit \
@@ -47,6 +72,14 @@ Request Body:
 {
   amount: <Number>
 }
+```
+Example:
+```shell
+curl --location 'localhost:8080/account/111111/debit' \
+--header 'Content-Type: application/json' \
+--data '{
+    "amount": 1000
+}'
 ```
 
 ### Credit from account
@@ -57,6 +90,14 @@ Request Body:
   amount: <Number>
 }
 ```
+Example:
+```shell
+curl --location 'localhost:8080/account/111111/credit' \
+--header 'Content-Type: application/json' \
+--data '{
+    "amount":10000
+}'
+```
 
 ### Transfer to another account
 POST /account/{accountNum}/transfer \
@@ -66,6 +107,15 @@ Request Body:
   to: <String>
   amount: <Number>
 }
+```
+Example:
+```shell
+curl --location 'localhost:8080/account/123456/transfer' \
+--header 'Content-Type: application/json' \
+--data '{
+    "to": "1111111",
+    "amount": 500
+}'
 ```
 
 ## Postman Test Collection
